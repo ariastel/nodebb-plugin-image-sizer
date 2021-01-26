@@ -1,47 +1,41 @@
-function getSetString(match, src, width, height)
-{
-    if (width == "" && height === "")
-        return match;
+function appendPx(size) {
+    return size.endsWith("px") || size.endsWith("%")
+        ? size
+        : `${size}px`;
+}
 
-    var onload = "";
-    if (height !== "")
-        onload += "this.style.maxHeight = '" + height + "px';";
-    else if (width !== ""){
-        onload += "this.style.maxHeight = (" + width + " / this.width) * this.height + 'px';";
+function staticSizeReplacer(match, src, width, height) {
+
+    if (!width && !height) {
+        return match;
     }
 
-    return "<img src=\"" + src + "\" onload=\"" + onload + "\"";
-}
-
-function getPercentString(match, src, percent) {
-    return getMultString(match, src, percent/100);
-}
-
-function getMultString(match, src, mult)
-{
-    if (mult == "")
-        return match;
-    var onload =
-        "var height = this.height * " + mult + ";" +
-        "this.style.width = 'auto';" +
-        "this.style.maxHeight = height + 'px';";
-    return "<img src=\"" + src + "\" onload=\"" + onload + "\"";
-}
-
-var ImageSizer = {
-    sizeImages: function(postData, callback) {
-        percentRegex = /<img src="([^@]*)@([0-9]+)%(25)?"/g; // TODO: figure out why "25" gets appended on v0.5.2
-        absoluteRegex = /<img src="([^@]*)@([0-9]*)x([0-9]*)"/g;
-        multiplyRegex = /<img src="([^@]*)@([0-9]*\.?[0-9]*)"/g;
-
-        var tmp = postData;
-
-        tmp = tmp.replace(percentRegex, getPercentString);
-        tmp = tmp.replace(multiplyRegex, getMultString);
-        tmp = tmp.replace(absoluteRegex, getSetString);
-
-        callback(null, tmp);
+    const additional = [];
+    if (width) {
+        additional.push(`width="${appendPx(width)}"`);
     }
+    if (height) {
+        additional.push(`height="${appendPx(height)}"`);
+    }
+
+    return `<img src="${src}" ${additional.join(" ")}`;
+}
+
+function sizeImages(content) {
+    const staticSizeRegex = /<img src="([^@]*)@([0-9]*(?:px|%)?)x?([0-9]*(?:px|%)?)"/g;
+    return content.replace(staticSizeRegex, staticSizeReplacer);
+}
+
+const ImageSizerPlugin = {};
+
+ImageSizerPlugin.parsePost = function (data, callback) {
+    const newData = { ...data };
+    newData.postData.content = sizeImages(data.postData.content);
+    callback(null, newData);
+}
+
+ImageSizerPlugin.parseRaw = function (data, callback) {
+    callback(null, sizeImages(data));
 };
 
-module.exports = ImageSizer;
+module.exports = ImageSizerPlugin;
