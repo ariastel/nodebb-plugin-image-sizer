@@ -1,10 +1,19 @@
 {
-    "id": "nodebb-plugin-image-sizer",
-    "name": "Image Sizer",
-    "description": "Adds image sizing markup to embedded images",
-    "url": "",
-    "library": "./library.js",
-    "hooks": [
-        {"hook": "filter:post.parse", "method": "sizeImages", "priority":6}
-    ]
+  "id": "nodebb-plugin-image-sizer",
+  "name": "Image Sizer",
+  "description": "Adds image sizing markup to embedded images",
+  "url": "https://github.com/ariastel/nodebb-plugin-image-sizer",
+  "library": "./library.js",
+  "hooks": [
+    {
+      "hook": "filter:parse.post",
+      "method": "parsePost",
+      "priority": 6
+    },
+    {
+      "hook": "filter:parse.raw",
+      "method": "parseRaw",
+      "priority": 6
+    }
+  ]
 }
